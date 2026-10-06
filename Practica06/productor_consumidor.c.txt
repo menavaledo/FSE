@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#define TAM_BUFFER   8
+#define TOTAL_DATOS  100
+#define MS_PRODUCTOR 100000
+#define MS_CONSUMIDOR 300000
+
+int buffer[TAM_BUFFER];
+int pos_entrada = 0;
+int pos_salida  = 0;
+
+int producidos = 0;
+int consumidos = 0;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t huecos_libres;
+sem_t datos_listos;
+
+void *productor(void *arg) {
+    for (int i = 1; i <= TOTAL_DATOS; i++) {
+        sem_wait(&huecos_libres);
+
+        pthread_mutex_lock(&mutex);
+        buffer[pos_entrada] = i;
+        pos_entrada = (pos_entrada + 1) % TAM_BUFFER;
+        producidos++;
+        pthread_mutex_unlock(&mutex);
+
+        sem_post(&datos_listos);
+
+        usleep(MS_PRODUCTOR);
+    }
+    return NULL;
+}
+
+void *consumidor(void *arg) {
+    for (int i = 0; i < TOTAL_DATOS; i++) {
+        sem_wait(&datos_listos);
+
+        pthread_mutex_lock(&mutex);
+        int dato = buffer[pos_salida];
+        pos_salida = (pos_salida + 1) % TAM_BUFFER;
+        consumidos++;
+        pthread_mutex_unlock(&mutex);
+
+        sem_post(&huecos_libres);
+
+        printf("Consumidor lee: %d\n", dato);
+        usleep(MS_CONSUMIDOR);
+    }
+    return NULL;
+}
+
+int main(void) {
+    pthread_t h_prod, h_cons;
+
+    sem_init(&huecos_libres, 0, TAM_BUFFER);
+    sem_init(&datos_listos, 0, 0);
+
+    pthread_create(&h_prod, NULL, productor, NULL);
+    pthread_create(&h_cons, NULL, consumidor, NULL);
+
+    pthread_join(h_prod, NULL);
+    pthread_join(h_cons, NULL);
+
+    sem_destroy(&huecos_libres);
+    sem_destroy(&datos_listos);
+    pthread_mutex_destroy(&mutex);
+
+    printf("\n--- Resumen final ---\n");
+    printf("Producidos: %d\n", producidos);
+    printf("Consumidos: %d\n", consumidos);
+    return 0;
+}

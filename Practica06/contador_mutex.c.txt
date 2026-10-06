@@ -1,0 +1,11 @@
+int contador = 0;
+pthread_mutex_t candado = PTHREAD_MUTEX_INITIALIZER;
+
+void *incrementar(void *arg) {
+    for (int i = 0; i < 100000; i++) {
+        pthread_mutex_lock(&candado);
+        contador++;
+        pthread_mutex_unlock(&candado);
+    }
+    return NULL;
+}
