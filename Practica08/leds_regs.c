@@ -28,10 +28,10 @@ int main(void)
     printf("Los cuatro LEDs con una sola escritura\n");
     for (int ronda = 0; ronda < 3; ronda++) {
         gpio->GPSET[0] = LED_MASCARA;
-        printf("GPLEV0 & mascara 0x%08X\n", gpio->GPLEV[0] & LED_MASCARA);
+        printf("GPLEV0 & mascara = 0x%08X\n", gpio->GPLEV[0] & LED_MASCARA);
         usleep(400000);
         gpio->GPCLR[0] = LED_MASCARA;
-        printf("GPLEV0 & mascara 0x%08X\n", gpio->GPLEV[0] & LED_MASCARA);
+        printf("GPLEV0 & mascara = 0x%08X\n", gpio->GPLEV[0] & LED_MASCARA);
         usleep(400000);
     }
 
@@ -43,6 +43,12 @@ int main(void)
             gpio->GPCLR[0] = BIT(leds[i]);
         }
     }
+
+    printf("Solo GPIO17 y GPIO22\n");
+    gpio->GPSET[0] = BIT(17) | BIT(22);
+    printf("GPLEV0 & mascara = 0x%08X\n", gpio->GPLEV[0] & LED_MASCARA);
+    usleep(1000000);
+    gpio->GPCLR[0] = BIT(17) | BIT(22);
 
     for (int i = 0; i < 4; i++)
         configurar(gpio, leds[i], 0);
